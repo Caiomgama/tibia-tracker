@@ -1,0 +1,35 @@
+name: Ler XP do Tibia
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # a cada 30 min; o highscores muda de hora em hora
+  workflow_dispatch:          # permite rodar na mão pela aba Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leitura
+  cancel-in-progress: false
+
+jobs:
+  ler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ler o highscores
+        run: python tibia_xp.py once
+
+      - name: Publicar se mudou
+        run: |
+          git config user.name  "tracker-tibia"
+          git config user.email "tracker@users.noreply.github.com"
+          git add tibia_leituras.json tibia_config.json docs/leituras.js docs/leituras.json
+          git diff --staged --quiet && echo "nada mudou" && exit 0
+          git commit -m "leitura $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
