@@ -378,6 +378,10 @@ def publicar_no_git(verboso=True):
     quando = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
     git("-c", "commit.gpgsign=false", "commit", "-m", "leitura " + quando)
     r = git("push", "--quiet")
+    if r.returncode != 0:
+        # alguém mexeu no repositório pela web: traz o que veio de lá e tenta de novo
+        git("-c", "rebase.autoStash=true", "pull", "--rebase", "--quiet")
+        r = git("push", "--quiet")
     if verboso:
         print("  publicado em https://caiomgama.github.io/tibia-tracker/" if r.returncode == 0
               else "  não consegui publicar: %s" % (r.stderr or r.stdout).strip()[:120])
