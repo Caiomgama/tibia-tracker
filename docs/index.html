@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tracker Tibia — 157 → 300</title>
+<style>
+:root{
+  --bg:#0e1116; --panel:#161b22; --panel2:#1c232c; --line:#2a323d;
+  --txt:#e6edf3; --dim:#8b98a5; --gold:#e3b341; --green:#3fb950; --red:#f85149;
+  --blue:#58a6ff; --purple:#bc8cff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.5 "Segoe UI",system-ui,sans-serif}
+a{color:var(--blue)}
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+h1{font-size:20px;margin:0 0 2px;color:var(--gold);letter-spacing:.3px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin:26px 0 10px;font-weight:600}
+.sub{color:var(--dim);font-size:12px;margin-bottom:16px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:14px}
+button{background:var(--panel2);color:var(--txt);border:1px solid var(--line);border-radius:7px;padding:8px 14px;cursor:pointer;font-size:13px;font-family:inherit}
+button:hover{border-color:var(--gold);color:var(--gold)}
+button.primary{background:var(--gold);color:#14181d;border-color:var(--gold);font-weight:600}
+button.primary:hover{filter:brightness(1.12);color:#14181d}
+input,select{background:#0d1117;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:6px 8px;font:inherit;font-size:13px}
+input:focus,select:focus{outline:none;border-color:var(--gold)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card .k{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--dim)}
+.card .v{font-size:21px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.card .s{font-size:11px;color:var(--dim);margin-top:2px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:980px}
+th{background:var(--panel2);color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:9px 8px;text-align:left;position:sticky;top:0;white-space:nowrap;border-bottom:1px solid var(--line)}
+td{padding:5px 8px;border-bottom:1px solid #202730;white-space:nowrap;font-variant-numeric:tabular-nums}
+tr:hover td{background:#1a2029}
+tr.today td{background:#1d2530}
+tr.future td{opacity:.45}
+td input,td select{width:100%;border:1px solid transparent;background:transparent;padding:4px 5px}
+td input:hover,td select:hover{border-color:var(--line)}
+td input.xp{text-align:right;font-weight:600}
+.num{text-align:right}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.p-acima{background:rgba(63,185,80,.15);color:var(--green)}
+.p-ritmo{background:rgba(227,179,65,.15);color:var(--gold)}
+.p-abaixo{background:rgba(248,81,73,.15);color:var(--red)}
+.p-off{background:rgba(139,152,165,.12);color:var(--dim)}
+.log{font-size:12px;color:var(--dim);min-height:18px}
+.log.err{color:var(--red)} .log.ok{color:var(--green)}
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.cfg label{display:block;font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.cfg input,.cfg select{width:100%}
+.hide{display:none}
+.chart{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
+.leg{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--dim);margin-top:8px}
+.leg i{display:inline-block;width:18px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.foot{color:var(--dim);font-size:11px;margin:24px 0 40px;line-height:1.7}
+.warn{background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.35);color:#f0d08a;border-radius:8px;padding:10px 12px;font-size:12.5px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Tracker Tibia — 157 → 300</h1>
+<div class="sub" id="subtitle">Carregando…</div>
+
+<div class="bar">
+  <button class="primary" id="btnFetch">⟳ Puxar XP agora</button>
+  <button id="btnCfg">⚙ Configuração</button>
+  <button id="btnExport">↓ Backup (JSON)</button>
+  <button id="btnImport">↑ Restaurar</button>
+  <button id="btnCsv">↓ CSV</button>
+  <input type="file" id="fileImport" accept=".json" class="hide">
+  <span class="log" id="log"></span>
+</div>
+
+<div id="cfgBox" class="card hide" style="margin-bottom:14px">
+  <div class="cfg">
+    <div><label>Personagem</label><input id="cChar" placeholder="Nome exato do char"></div>
+    <div><label>Mundo (auto)</label><input id="cWorld" placeholder="detectado pelo Tibia.com"></div>
+    <div><label>Level inicial</label><input id="cLvIni" type="number"></div>
+    <div><label>Level alvo</label><input id="cLvAlvo" type="number"></div>
+    <div><label>Início</label><input id="cInicio" type="date"></div>
+    <div><label>Prazo Fast</label><input id="cFast" type="date"></div>
+    <div><label>Prazo Realista</label><input id="cReal" type="date"></div>
+    <div><label>Prazo Conservador</label><input id="cCons" type="date"></div>
+    <div><label>Auto-puxar ao abrir</label><select id="cAuto"><option value="1">Sim</option><option value="0">Não</option></select></div>
+  </div>
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="primary" id="btnSaveCfg">Salvar</button>
+    <button id="btnReset" style="margin-left:auto">Zerar tudo</button>
+  </div>
+  <div class="log" id="cfgLog" style="margin-top:8px"></div>
+</div>
+
+<div id="warnBox"></div>
+<div id="ancoraBox"></div>
+
+<div class="grid" id="cards"></div>
+
+<h2>Progresso vs metas</h2>
+<div class="chart">
+  <svg id="chart" viewBox="0 0 1000 340" style="width:100%;height:auto"></svg>
+  <div class="leg">
+    <span><i style="background:var(--gold)"></i>Real</span>
+    <span><i style="background:var(--purple)"></i>Fast</span>
+    <span><i style="background:var(--blue)"></i>Realista</span>
+    <span><i style="background:var(--green)"></i>Conservador</span>
+  </div>
+</div>
+
+<h2>Acompanhamento diário</h2>
+<div class="tblwrap">
+<table id="tbl">
+<thead><tr>
+  <th>Data</th><th>Tipo do dia</th><th>Hunt</th>
+  <th class="num">XP do dia</th><th class="num">Acumulada</th>
+  <th class="num">Lv</th><th class="num">Meta Real.</th><th>Status</th>
+  <th class="num">Média 7d</th><th>Projeção 300</th><th>Fonte</th>
+</tr></thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+
+<div class="foot" id="foot"></div>
+
+</div>
+<script src="leituras.js" onerror="void 0"></script>
+<script>
+/* ===== curvas de meta acumulada (120 dias), vindas da planilha original ===== */
+const CURVES={"fast":[5500000,11157815,16973446,22946892,29078153,35367229,41814121,48418828,55181350,62101688,69179841,76415809,83809592,91361191,99070605,106937834,114962879,123145739,131486414,139984904,148641210,157455331,166427267,175557018,184844585,194289967,203893164,213654177,223573005,233649648,243884106,254276380,264826469,275534373,286400093,297423628,308604978,319944143,331441124,343095920,354908531,366878958,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200,379007200],"real":[4200000,8471755,12815266,17230532,21717554,26276331,30906864,35609152,40383196,45228995,50146550,55135860,60196926,65329747,70534324,75810656,81158744,86578587,92070186,97633540,103268650,108975515,114754136,120604512,126526644,132520531,138586173,144723571,150932724,157213633,163566297,169990717,176486892,183054823,189694509,196405951,203189148,210044101,216970809,223969273,231039492,238181467,245395197,252680683,260037924,267466921,274967673,282540181,290184444,297900463,305688237,313547766,321479051,329482091,337556887,345703438,353921745,362211807,370573625,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198,379007198],"cons":[3000000,6022193,9066580,12133160,15221933,18332900,21466060,24621414,27798961,30998701,34220635,37464762,40731082,44019596,47330303,50663203,54018297,57395584,60795065,64216739,67660606,71126667,74614921,78125368,81658009,85212843,88789870,92389091,96010505,99654113,103319914,107007908,110718096,114450477,118205051,121981819,125780780,129601935,133445283,137310824,141198559,145108487,149040608,152994923,156971431,160970132,164991027,169034115,173099397,177186872,181296540,185428402,189582457,193758705,197957147,202177782,206420610,210685632,214972847,219282256,223613858,227967653,232343642,236741824,241162199,245604768,250069530,254556485,259065634,263596976,268150512,272726241,277324163,281944279,286586588,291251090,295937786,300646675,305377757,310131033,314906502,319704165,324524021,329366070,334230313,339116749,344025378,348956201,353909217,358884427,363881830,368901426,373943216,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199,379007199]};
+
+/* ===== constantes ===== */
+const HUNTS=["","Ravenous Lava Lurkers","Exotic Cave","Grimvale / Werecreatures","Old Fortress / Grimvale",
+"Werehyaenas","Pirat Mines","Glooth Bandits","Pirat / access hunts","Hunt de profit forte",
+"Melhor solo disponível","Backup livre"];
+const TIPOS={"Hunt":1,"Misto":0.5,"Quest/Acesso":0.2,"Não joguei":0,"":null};
+const DIAS=120;
+
+/* XP total acumulada do personagem ao atingir o level L (fórmula oficial do Tibia) */
+const expAt=L=>Math.round((50*Math.pow(L-1,3)-150*Math.pow(L-1,2)+400*(L-1))/3);
+function levelFromExp(e){let L=1;while(expAt(L+1)<=e)L++;return L;}
+
+/* ===== estado ===== */
+const DEF={
+  versao:3,
+  cfg:{char:"Caio Gama",world:"Yovera",lvIni:157,lvAlvo:300,inicio:"2026-08-12",
+       fast:"2026-09-24",real:"2026-10-11",cons:"2026-11-14",auto:1},
+  dias:{
+    "2026-08-12":{tipo:"Hunt",hunt:"Ravenous Lava Lurkers",xp:9686973,fonte:"manual"},
+    "2026-08-13":{tipo:"Hunt",hunt:"Ravenous Lava Lurkers",xp:13666769,fonte:"manual"},
+    "2026-08-14":{tipo:"Hunt",hunt:"Ravenous Lava Lurkers",xp:2072000,fonte:"manual"}
+  },
+};
+
+/* Correção de datas (14/08/2026): os três primeiros lançamentos estavam um dia à
+   frente do dia em que a XP foi feita. Só remapeia se os valores continuarem
+   intactos — se você já editou algum, nada é tocado. */
+function migrar(S){
+  if(S.versao>=3)return S;
+  if(S.versao>=2){                       // horas de hunt deixaram de ser rastreadas
+    for(const d of Object.values(S.dias))delete d.horas;
+    S.versao=3; return S;
+  }
+  const de={"2026-08-13":9686973,"2026-08-14":13666769,"2026-08-15":2072000};
+  const bate=Object.entries(de).every(([d,v])=>S.dias[d]&&S.dias[d].xp===v);
+  if(bate){
+    const novos={};
+    for(const [d,dia] of Object.entries(S.dias))
+      novos[d in de?addDays(d,-1):d]=dia;
+    S.dias=novos;
+    if(S.cfg.inicio==="2026-08-13")S.cfg.inicio="2026-08-12";
+  }
+  for(const d of Object.values(S.dias))delete d.horas;
+  S.versao=3;
+  return S;
+}
+let S=null;   // carregado no boot, depois das funções de data
+
+function load(){
+  try{const r=localStorage.getItem("trackerTibia");
+    if(r){const o=JSON.parse(r);o.cfg=Object.assign({},DEF.cfg,o.cfg||{});o.versao=o.versao||1;return migrar(o);}
+  }catch(e){}
+  return JSON.parse(JSON.stringify(DEF));
+}
+let storageOk=true;
+function save(){
+  try{localStorage.setItem("trackerTibia",JSON.stringify(S));}
+  catch(e){
+    if(storageOk){storageOk=false;
+      log("Não consegui salvar neste contexto (janela anônima ou storage bloqueado). Os cálculos funcionam, mas use o Backup JSON antes de fechar.","err");}
+  }
+}
+
+/* ===== datas ===== */
+const pad=n=>String(n).padStart(2,"0");
+const iso=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+function addDays(s,n){const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return iso(d);}
+function diffDays(a,b){return Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5);}
+const br=s=>s?s.slice(8,10)+"/"+s.slice(5,7):"";
+const hoje=()=>iso(new Date());
+
+/* ===== formatação ===== */
+const fmt=n=>(n===""||n==null||isNaN(n))?"":Math.round(n).toLocaleString("pt-BR");
+function kk(n){if(!n)return "0";const a=Math.abs(n);
+  if(a>=1e9)return (n/1e9).toFixed(2)+"kkk";
+  if(a>=1e6)return (n/1e6).toFixed(2)+"kk";
+  if(a>=1e3)return (n/1e3).toFixed(1)+"k";return String(Math.round(n));}
+
+/* ===== cálculo ===== */
+function calc(){
+  const c=S.cfg, xpNec=expAt(c.lvAlvo)-expAt(c.lvIni);
+  const rows=[]; let acum=0;
+  for(let i=0;i<DIAS;i++){
+    const data=addDays(c.inicio,i);
+    const d=S.dias[data]||{};
+    const tem=typeof d.xp==="number";
+    if(tem)acum+=d.xp;
+    const peso=TIPOS[d.tipo]==null?null:TIPOS[d.tipo];
+    const mFast=(CURVES.fast[i]-(i?CURVES.fast[i-1]:0));
+    const mReal=(CURVES.real[i]-(i?CURVES.real[i-1]:0));
+    const mCons=(CURVES.cons[i]-(i?CURVES.cons[i-1]:0));
+    const metaReal=peso==null?null:mReal*peso;
+    let status="";
+    if(tem){
+      if(metaReal===0)status="PLANEJADO";
+      else if(metaReal==null)status="";
+      else if(d.xp>=metaReal)status="ACIMA";
+      else if(d.xp>=metaReal*0.85)status="NO RITMO";
+      else status="ABAIXO";
+    }
+    // média dos últimos 7 dias com dado preenchido
+    let soma=0,qtd=0;
+    for(let j=Math.max(0,i-6);j<=i;j++){
+      const dd=S.dias[addDays(c.inicio,j)];
+      if(dd&&typeof dd.xp==="number"){soma+=dd.xp;qtd++;}
+    }
+    const med7=qtd?soma/qtd:null;
+    const falta=Math.max(0,xpNec-acum);
+    const proj=(tem&&med7>0)?addDays(data,Math.ceil(falta/med7)):null;
+    rows.push({i,data,d,tem,acum:tem?acum:null,
+      lv:tem?levelFromExp(expAt(c.lvIni)+acum):null,
+      metaFast:peso==null?null:mFast*peso,metaReal,metaCons:peso==null?null:mCons*peso,
+      status,med7,proj,
+      curvaFast:CURVES.fast[i],curvaReal:CURVES.real[i],curvaCons:CURVES.cons[i]});
+  }
+  return {rows,xpNec,acum};
+}
+
+/* ===== render ===== */
+function render(){
+  const c=S.cfg,{rows,xpNec,acum}=calc();
+  const ultimo=[...rows].reverse().find(r=>r.tem);
+  const h=hoje();
+
+  document.getElementById("subtitle").innerHTML=
+    (c.char?"<b style='color:var(--txt)'>"+c.char+"</b>"+(c.world?" · "+c.world:""):"<span style='color:var(--red)'>Configure o personagem em ⚙</span>")+
+    " · início "+br(c.inicio)+" · "+fmt(xpNec)+" xp até o level "+c.lvAlvo;
+
+  // A leitura do highscores é a verdade sobre a XP do char; a soma dos dias é
+  // só a distribuição dela no calendário. Quando as duas divergem, mostramos as duas.
+  const anc=(S.ancora&&S.ancora.fonte==="highscores")?S.ancora:null;
+  const ajuste=anc?(anc.ajuste||0):0;
+  // a leitura é a verdade sobre o total; o ajuste guarda o que ela sabe a mais que os dias,
+  // e continua valendo quando você lança XP nova depois dela
+  const acumOficial=acum+ajuste;
+  const dif=ajuste;
+
+  // cards
+  const pct=Math.min(100,acumOficial/xpNec*100);
+  const st=(v,alvo)=>v>=alvo?["À FRENTE","p-acima"]:v>=alvo*0.98?["NO RITMO","p-ritmo"]:["ATRÁS","p-abaixo"];
+  const idxHoje=Math.max(0,Math.min(DIAS-1,diffDays(c.inicio,h)));
+  const cf=st(acumOficial,CURVES.fast[idxHoje]),cr=st(acumOficial,CURVES.real[idxHoje]),cc=st(acumOficial,CURVES.cons[idxHoje]);
+  const med7=ultimo?ultimo.med7:0;
+  const falta=Math.max(0,xpNec-acumOficial);
+  document.getElementById("cards").innerHTML=[
+    ["XP acumulada",kk(acumOficial),anc?pct.toFixed(1)+"% · lida do highscores":pct.toFixed(1)+"% do caminho"],
+    [anc?"Level":"Level estimado",anc?anc.level:(ultimo?ultimo.lv:c.lvIni),
+     anc&&anc.rank?"rank "+anc.rank+" · falta "+kk(falta):"falta "+kk(falta)],
+    ["Média 7 dias",kk(med7),med7?Math.round(falta/med7)+" dias nesse ritmo":"sem dados"],
+    ["Projeção lv "+c.lvAlvo,ultimo&&ultimo.proj?br(ultimo.proj)+"/"+ultimo.proj.slice(0,4):"—",""],
+    ["Fast — "+br(c.fast),"<span class='pill "+cf[1]+"'>"+cf[0]+"</span>","meta hoje "+kk(CURVES.fast[idxHoje])],
+    ["Realista — "+br(c.real),"<span class='pill "+cr[1]+"'>"+cr[0]+"</span>","meta hoje "+kk(CURVES.real[idxHoje])],
+    ["Conservador — "+br(c.cons),"<span class='pill "+cc[1]+"'>"+cc[0]+"</span>","meta hoje "+kk(CURVES.cons[idxHoje])]
+  ].map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join("");
+
+  // ajuste: o que a leitura sabe a mais que a soma dos dias
+  const ab=document.getElementById("ancoraBox");
+  if(anc&&Math.abs(ajuste)>=1000){
+    ab.innerHTML=`<div class="warn">Somando <b>${kk(ajuste)}</b> de ajuste: o highscores diz que você tem
+      ${fmt(anc.exp-expAt(c.lvIni))} xp desde o level ${c.lvIni}, e os dias lançados somam ${fmt(acum)}.
+      A diferença é XP que você fez antes de começar a lançar — ela entra no acumulado sem virar linha de dia,
+      então não some quando os dias forem fechados pelo highscores.</div>`;
+  }else ab.innerHTML="";
+
+  // aviso de leitura
+  const w=document.getElementById("warnBox");
+  if(!anc){
+    w.innerHTML=`<div class="warn">Nenhuma leitura do highscores ainda. Abra o tracker pelo atalho <b>Tracker Tibia.bat</b> e clique em <b>⟳ Puxar XP agora</b> — a partir daí a XP entra sozinha de hora em hora.</div>`;
+  }else if(diffDays(anc.data,h)>1){
+    w.innerHTML=`<div class="warn">A última leitura foi no ciclo de ${br(anc.data)}, ${diffDays(anc.data,h)} dias atrás. O próximo fechamento vai somar esses dias num único dia.</div>`;
+  }else w.innerHTML="";
+
+  // tabela — mostra até 7 dias além do último preenchido
+  const limite=Math.max(idxHoje+3,(ultimo?ultimo.i:0)+3);
+  const tb=document.getElementById("tbody");
+  tb.innerHTML=rows.filter(r=>r.i<=limite).map(r=>{
+    const cls=r.data===h?"today":((r.data>h&&!r.tem)?"future":"");
+    const pill=r.status?`<span class="pill ${{ACIMA:"p-acima","NO RITMO":"p-ritmo",ABAIXO:"p-abaixo",PLANEJADO:"p-off"}[r.status]}">${r.status}</span>`:"";
+    return `<tr class="${cls}" data-d="${r.data}">
+      <td>${br(r.data)}<span style="color:var(--dim)"> ${["dom","seg","ter","qua","qui","sex","sáb"][new Date(r.data+"T12:00:00").getDay()]}</span></td>
+      <td><select data-f="tipo">${Object.keys(TIPOS).map(t=>`<option ${t===(r.d.tipo||"")?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td><select data-f="hunt">${HUNTS.map(t=>`<option ${t===(r.d.hunt||"")?"selected":""}>${t}</option>`).join("")}</select></td>
+      <td class="num"><input data-f="xp" class="xp" value="${r.d.xp??""}"></td>
+      <td class="num">${r.tem?fmt(r.acum):""}</td>
+      <td class="num">${r.lv??""}</td>
+      <td class="num" style="color:var(--dim)">${r.metaReal==null?"":kk(r.metaReal)}</td>
+      <td>${pill}</td>
+      <td class="num" style="color:var(--dim)">${r.med7?kk(r.med7):""}</td>
+      <td style="color:var(--dim)">${r.proj?br(r.proj)+"/"+r.proj.slice(2,4):""}</td>
+      <td style="color:var(--dim);font-size:11px">${r.d.fonte||""}</td>
+    </tr>`;}).join("");
+
+  drawChart(rows,idxHoje,xpNec);
+
+  document.getElementById("foot").innerHTML=
+    `A linha de cada data guarda a XP que você fez <b>naquele dia</b>. O dia do Tibia vira no Server Save (04h aqui), então jogar às 22h de sexta ou às 2h de sábado conta tudo como sexta.<br>
+     A XP vem sozinha do highscores — o que conta é quanto rendeu, não quanto tempo levou.<br>
+     Fonte: highscores oficial do Tibia.com, filtrado por mundo e vocação — ele se atualiza de hora em hora${anc&&anc.idade?` (na última leitura: <b>${anc.idade}</b>)`:""}.
+     Tudo fica salvo neste navegador; use o backup JSON antes de limpar cache ou trocar de máquina.`;
+}
+
+/* ===== gráfico ===== */
+function drawChart(rows,idxHoje,xpNec){
+  const W=1000,H=340,P={t:14,r:14,b:26,l:66};
+  const n=Math.min(DIAS,Math.max(idxHoje+14,21));
+  const maxY=Math.max(CURVES.fast[n-1],rows[n-1]?.curvaFast||0,...rows.filter(r=>r.tem).map(r=>r.acum))||1;
+  const X=i=>P.l+i/(n-1)*(W-P.l-P.r);
+  const Y=v=>H-P.b-(v/maxY)*(H-P.t-P.b);
+  const line=(get,color,dash)=>{
+    let d="",started=false;
+    for(let i=0;i<n;i++){const v=get(i);if(v==null)continue;
+      d+=(started?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1)+" ";started=true;}
+    return d?`<path d="${d}" fill="none" stroke="${color}" stroke-width="${dash?1.6:2.6}" ${dash?'stroke-dasharray="5 4"':""} stroke-linejoin="round"/>`:"";
+  };
+  let g="";
+  for(let k=0;k<=4;k++){const v=maxY*k/4;
+    g+=`<line x1="${P.l}" y1="${Y(v)}" x2="${W-P.r}" y2="${Y(v)}" stroke="#252d38"/>
+        <text x="${P.l-8}" y="${Y(v)+4}" fill="#8b98a5" font-size="11" text-anchor="end">${kk(v)}</text>`;}
+  for(let i=0;i<n;i+=Math.ceil(n/12)){
+    g+=`<text x="${X(i)}" y="${H-8}" fill="#8b98a5" font-size="10" text-anchor="middle">${br(rows[i].data)}</text>`;}
+  g+=`<line x1="${X(idxHoje)}" y1="${P.t}" x2="${X(idxHoje)}" y2="${H-P.b}" stroke="#e3b341" stroke-width="1" stroke-dasharray="3 3" opacity=".5"/>`;
+  g+=line(i=>rows[i].curvaFast,"#bc8cff",1);
+  g+=line(i=>rows[i].curvaReal,"#58a6ff",1);
+  g+=line(i=>rows[i].curvaCons,"#3fb950",1);
+  g+=line(i=>rows[i].acum,"#e3b341",0);
+  const last=[...rows].reverse().find(r=>r.tem);
+  if(last)g+=`<circle cx="${X(last.i)}" cy="${Y(last.acum)}" r="4" fill="#e3b341"/>`;
+  document.getElementById("chart").innerHTML=g;
+}
+
+const log=(m,cls="")=>{const e=document.getElementById("log");e.className="log "+cls;e.textContent=m;};
+
+/* ===== integração com o leitor local (tibia_xp.py) =====
+
+   O highscores do Tibia.com se atualiza de hora em hora (a própria página mostra
+   "Last Update: X minutes ago"), então uma leitura traz a XP do personagem com até
+   ~1h de atraso — não é preciso esperar o Server Save para ver o dia render.
+
+   Marco de um ciclo = a PRIMEIRA leitura depois do Server Save dele, que é a foto
+   mais limpa do fechamento. A XP de um dia fechado é a diferença entre dois marcos.
+   Durante o dia, a diferença entre a leitura mais recente e o marco do ciclo é o
+   parcial — o que você já fez hoje. */
+let MODO_SERVIDOR=false;
+
+/* O Server Save é 10:00 no horário da Alemanha, que muda com o horário de verão
+   europeu: 08:00 UTC entre o último domingo de março e o de outubro, 09:00 UTC no
+   resto do ano. Sem isso, as datas saem um dia trocadas depois de 25/10. */
+function ultimoDomingo(ano,mes){
+  const d=new Date(Date.UTC(ano,mes,0));
+  d.setUTCDate(d.getUTCDate()-d.getUTCDay());
+  d.setUTCHours(1,0,0,0);
+  return d;
+}
+function horasAteOSS(t){
+  const ano=t.getUTCFullYear();
+  return (t>=ultimoDomingo(ano,3)&&t<ultimoDomingo(ano,10))?8:9;
+}
+
+/* data do Server Save a que um instante pertence */
+function ancoraDe(ts){
+  const t=new Date(ts);
+  return new Date(t.getTime()-horasAteOSS(t)*3600e3).toISOString().slice(0,10);
+}
+
+/* Linha em que a XP feita num instante deve ser lançada: o próprio dia do ciclo.
+   Como o dia do Tibia vira no Server Save (04h em Manaus), jogar às 22h de sexta
+   ou às 2h de sábado cai na mesma linha — a de sexta. */
+function linhaDoCiclo(ts){ return ancoraDe(ts); }
+
+function marcosDe(lista){
+  const m={};
+  [...lista].sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(l=>{
+    const a=l.ancora||ancoraDe(l.ts);
+    if(!(a in m))m[a]=l;              // a primeira leitura do ciclo é o marco
+  });
+  return m;
+}
+
+function aplicarLeituras(lista){
+  if(!lista||!lista.length)return false;
+  const porAncora={};
+  [...lista].sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(l=>{
+    const a=l.ancora||ancoraDe(l.ts);
+    (porAncora[a]=porAncora[a]||[]).push(l);
+  });
+  const datas=Object.keys(porAncora).sort();
+  const marco=a=>porAncora[a][0];                 // primeira leitura do ciclo
+  const ultima=a=>porAncora[a][porAncora[a].length-1];
+  let mudou=false;
+
+  const grava=(D,valor,fonte)=>{
+    const d=S.dias[D]||{};
+    if(d.xp===valor&&d.fonte===fonte)return;
+    d.xp=valor; d.fonte=fonte;
+    if(!d.tipo)d.tipo=valor>0?"Hunt":"Não joguei";
+    S.dias[D]=d; mudou=true;
+  };
+
+  // dias já fechados: o que rendeu entre dois Server Saves pertence ao dia que começou
+  // no primeiro deles — o marco seguinte só é a foto do fechamento
+  for(let i=1;i<datas.length;i++){
+    const D=datas[i-1], vao=diffDays(D,datas[i]), ganho=marco(datas[i]).exp-marco(D).exp;
+    if(ganho<0)continue;                           // morte ou rollback
+    grava(D,ganho,vao>1?("highscores "+vao+"d"):"highscores");
+  }
+
+  // dia em andamento: o que já rendeu desde o Server Save de hoje
+  const A=datas[datas.length-1], emAndamento=A;
+  const parcial=ultima(A).exp-marco(A).exp;
+  if(parcial>0)grava(emAndamento,parcial,"highscores parcial");
+
+  // o que a leitura sabe e os dias não sabem: XP feita antes de você começar a lançar
+  let somaDias=0;
+  for(const d of Object.values(S.dias))if(typeof d.xp==="number")somaDias+=d.xp;
+  const u=ultima(A);
+  S.ancora={data:A,exp:u.exp,level:u.level,rank:u.rank||null,fonte:u.fonte||"highscores",
+            ts:u.ts,idade:u.idade||null,
+            ajuste:(u.exp-expAt(S.cfg.lvIni))-somaDias};
+  save();
+  render();
+  return mudou;
+}
+
+/* Hospedado (GitHub Pages), não existe leitor local: os dados chegam pelo
+   leituras.json que a rotina da nuvem republica. */
+async function buscarPublicado(){
+  try{
+    const r=await fetch("leituras.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return false;
+    const j=await r.json();
+    if(!j.leituras||!j.leituras.length)return false;
+    if(j.cfg&&j.cfg.char){S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;fillCfg();}
+    aplicarLeituras(j.leituras);
+    ULTIMA_PUBLICACAO=j.atualizado||null;
+    return true;
+  }catch(e){return false;}
+}
+let ULTIMA_PUBLICACAO=null;
+
+async function detectarServidor(){
+  try{
+    const r=await fetch("/api/status",{cache:"no-store"});
+    if(!r.ok)return false;
+    const j=await r.json();
+    if(!j.servidor)return false;
+    MODO_SERVIDOR=true;
+    if(j.cfg&&j.cfg.char){S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;fillCfg();}
+    aplicarLeituras(j.leituras);
+    return true;
+  }catch(e){return false;}
+}
+
+async function puxarDoServidor(){
+  log("lendo o highscores oficial (mundo + vocação)…");
+  const r=await fetch("/api/puxar",{cache:"no-store"});
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.erro||"falha na leitura");
+  const st=await (await fetch("/api/status",{cache:"no-store"})).json();
+  aplicarLeituras(st.leituras);
+  const quem=`${j.char} (${j.mundo}, ${j.vocacao}) level ${j.level}${j.rank?" · rank "+j.rank:""}`;
+  if(j.repetida)
+    log(`Mesmo valor de antes — o highscores atualiza de hora em hora${j.idade?" ("+j.idade+")":""}. A XP que você fez desde então entra na próxima virada de hora. ${quem}.`);
+  else if(j.ganho==null)
+    log(`Marco gravado: ${quem} · ${fmt(j.exp)} xp no SS de ${br(j.data)}.`,"ok");
+  else
+    log(`✔ ${br(j.data)}: +${fmt(j.ganho)} xp (${kk(j.ganho)}) · ${quem}${j.idade?" · highscores "+j.idade:""}.`,"ok");
+  document.getElementById("warnBox").innerHTML = j.fonte==="level"
+    ? `<div class="warn"><b>${j.char}</b> saiu do top 1000 de ${j.vocacao} em ${j.mundo} — enquanto isso a XP é estimada pelo level, e só muda quando você sobe de level.</div>`
+    : "";
+}
+
+async function puxar(manual){
+  if(!MODO_SERVIDOR){
+    if(ULTIMA_PUBLICACAO!==null){
+      const ok=await buscarPublicado();
+      log(ok?"Atualizado com a última leitura da nuvem (a rotina roda sozinha a cada 30 min)."
+            :"Não consegui buscar os dados publicados agora. Tente daqui a pouco.",ok?"ok":"err");
+      return;
+    }
+    log("Esta janela não alcança o Tibia.com. Abra o tracker pelo atalho 'Tracker Tibia.bat' — lá o botão lê o highscores de verdade.","err");
+    return;
+  }
+  try{ await puxarDoServidor(); }
+  catch(e){ log("Falhou: "+e.message,"err"); }
+}
+
+/* ===== eventos ===== */
+document.getElementById("tbody").addEventListener("change",e=>{
+  const f=e.target.dataset.f;if(!f)return;
+  const data=e.target.closest("tr").dataset.d;
+  const d=S.dias[data]||{};
+  let v=e.target.value.trim();
+  if(f==="xp"){
+    v=v.replace(/\./g,"").replace(",",".").replace(/[^\d.\-+*]/g,"");
+    if(v===""){delete d[f];}
+    else{ let num; try{num=/^[\d.+\-*\s]+$/.test(v)?Function('"use strict";return('+v+')')():NaN;}catch(_){num=NaN;}
+      if(isNaN(num)){e.target.value=d[f]??"";return;} d[f]=num; if(f==="xp"){d.fonte="manual"; if(!d.tipo)d.tipo=num>0?"Hunt":"Não joguei";} }
+  }else{ if(v==="")delete d[f]; else d[f]=v; }
+  if(Object.keys(d).length)S.dias[data]=d; else delete S.dias[data];
+  save();render();
+});
+document.getElementById("btnFetch").onclick=()=>puxar(true);
+document.getElementById("btnCfg").onclick=()=>document.getElementById("cfgBox").classList.toggle("hide");
+document.getElementById("btnSaveCfg").onclick=()=>{
+  const c=S.cfg;
+  c.char=cChar.value.trim(); c.world=cWorld.value.trim();
+  c.lvIni=+cLvIni.value||157; c.lvAlvo=+cLvAlvo.value||300;
+  c.inicio=cInicio.value||c.inicio; c.fast=cFast.value; c.real=cReal.value; c.cons=cCons.value;
+  c.auto=+cAuto.value;
+  save();render();document.getElementById("cfgLog").textContent="Salvo.";
+};
+/* Salvar arquivo: aberto no navegador, é download direto; publicado como página do
+   Claude, o download precisa passar pela confirmação do visualizador. */
+async function baixar(nome,conteudo,tipo){
+  const dl=(window.claude&&window.claude.use)?await window.claude.use("downloads"):null;
+  if(dl){
+    try{ await dl.save({filename:nome,data:conteudo}); log("Arquivo salvo.","ok"); }
+    catch(e){
+      const c=e&&e.code;
+      if(c==="declined")return;
+      if(c==="extension_not_enabled"&&/\.csv$/.test(nome)){
+        try{ await dl.save({filename:nome.replace(/\.csv$/,".txt"),data:conteudo});
+             log("Salvo como .txt — .csv não é liberado nesta versão. Abre igual no Excel.","ok"); return; }
+        catch(e2){ if(e2&&e2.code==="declined")return; }
+      }
+      log("Não consegui salvar: "+((e&&e.message)||e),"err");
+    }
+    return;
+  }
+  const b=new Blob([conteudo],{type:tipo});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=nome;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+document.getElementById("btnExport").onclick=()=>
+  baixar("tracker_tibia_"+hoje()+".json",JSON.stringify(S,null,1),"application/json");
+document.getElementById("btnImport").onclick=()=>document.getElementById("fileImport").click();
+document.getElementById("fileImport").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.dias)throw new Error("arquivo inválido");
+    S=o;S.cfg=Object.assign({},DEF.cfg,S.cfg||{});S.versao=S.versao||1;migrar(S);save();fillCfg();render();log("Backup restaurado.","ok");
+  }catch(err){log("Backup inválido: "+err.message,"err");}};
+  r.readAsText(f);
+};
+document.getElementById("btnCsv").onclick=async()=>{
+  const {rows}=calc();
+  const head=["Data","Tipo","Hunt","XP do dia","Acumulada","Level","Meta realista","Status","Media 7d","Projecao","Fonte"];
+  const body=rows.filter(r=>r.tem||r.d.tipo).map(r=>[r.data,r.d.tipo||"",r.d.hunt||"",r.d.xp??"",
+    r.acum??"",r.lv??"",r.metaReal==null?"":Math.round(r.metaReal),r.status,
+    r.med7?Math.round(r.med7):"",r.proj||"",r.d.fonte||""].join(";"));
+  baixar("tracker_tibia.csv","﻿"+[head.join(";"),...body].join("\n"),"text/csv");
+};
+document.getElementById("btnReset").onclick=()=>{
+  if(!confirm("Apagar TUDO e voltar ao estado inicial? Faça o backup antes."))return;
+  localStorage.removeItem("trackerTibia");S=JSON.parse(JSON.stringify(DEF));fillCfg();render();
+};
+function fillCfg(){const c=S.cfg;
+  cChar.value=c.char;cWorld.value=c.world;cLvIni.value=c.lvIni;cLvAlvo.value=c.lvAlvo;
+  cInicio.value=c.inicio;cFast.value=c.fast;cReal.value=c.real;cCons.value=c.cons;cAuto.value=c.auto;}
+
+/* ===== boot ===== */
+S=load();
+fillCfg();render();
+if(window.LEITURAS){
+  if(window.LEITURAS_CFG&&window.LEITURAS_CFG.char){
+    S.cfg.char=window.LEITURAS_CFG.char;S.cfg.world=window.LEITURAS_CFG.mundo||S.cfg.world;fillCfg();
+  }
+  aplicarLeituras(window.LEITURAS);
+}
+detectarServidor().then(async ok=>{
+  if(!ok){
+    if(await buscarPublicado()){
+      log("Dados vindos da rotina automática na nuvem.","ok");
+      setInterval(buscarPublicado,5*60*1000);
+    }
+    return;
+  }
+  log("Leitor local conectado — o botão lê o highscores oficial por mundo e vocação.","ok");
+  if(S.cfg.auto)setTimeout(()=>puxar(false),400);   // MODO_SERVIDOR só é true aqui
+
+  /* Com a página aberta o dia inteiro, recolhe de 5 em 5 minutos o que a tarefa
+     agendada já gravou. Não consulta o Tibia.com — só lê o arquivo local, então
+     não gera tráfego no site. */
+  setInterval(async()=>{
+    try{
+      const r=await fetch("/api/status",{cache:"no-store"});
+      if(r.ok)aplicarLeituras((await r.json()).leituras);
+    }catch(e){}
+  },5*60*1000);
+});
+</script>
+</body>
+</html>
