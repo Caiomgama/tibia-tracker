@@ -16,6 +16,7 @@ Comandos:
   python tibia_xp.py agendar                agenda a leitura de hora em hora
   python tibia_xp.py agendar 1440           agenda 1x por dia (ou outro intervalo em minutos)
   python tibia_xp.py status                 mostra o que já foi lido
+  python tibia_xp.py publicar               envia as leituras para o GitHub Pages
 
 Sem dependências externas — só a biblioteca padrão do Python.
 """
@@ -310,6 +311,8 @@ def ler(verboso=True, esperar=0):
             time.sleep((falta + MARGEM) * 60)
             return ler(verboso, esperar=0)          # uma tentativa extra, sem repetir a espera
 
+    publicar_no_git(verboso)
+
     ganho = (exp - anterior["exp"]) if anterior else None
     # o que rendeu entre dois Server Saves pertence ao dia que começou no primeiro deles
     linha = anterior["ancora"] if anterior else anc
@@ -348,6 +351,37 @@ def escrever_js(dados, cfg):
             json.dump({"leituras": leituras, "cfg": cfg,
                        "atualizado": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z"},
                       f, ensure_ascii=False)
+
+
+def publicar_no_git(verboso=True):
+    """Envia as leituras para o GitHub, que serve a página pública.
+
+    O Tibia.com recusa conexões dos servidores do GitHub (403), então a leitura tem
+    de sair deste PC. Aqui lê e publica; a nuvem só hospeda.
+    """
+    if not os.path.isdir(os.path.join(BASE, ".git")):
+        return
+    import subprocess
+
+    def git(*a):
+        return subprocess.run(["git"] + list(a), cwd=BASE, capture_output=True,
+                              text=True, encoding="utf-8", errors="replace")
+
+    alvos = [f for f in ("tibia_leituras.json", "tibia_config.json",
+                         "docs/leituras.js", "docs/leituras.json")
+             if os.path.exists(os.path.join(BASE, f))]
+    if not alvos:
+        return
+    git("add", *alvos)
+    if git("diff", "--staged", "--quiet").returncode == 0:
+        return                                           # nada mudou desde a última
+    quando = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    git("-c", "commit.gpgsign=false", "commit", "-m", "leitura " + quando)
+    r = git("push", "--quiet")
+    if verboso:
+        print("  publicado em https://caiomgama.github.io/tibia-tracker/" if r.returncode == 0
+              else "  não consegui publicar: %s" % (r.stderr or r.stdout).strip()[:120])
+
 
 
 # ------------------------------------------------------------------ comandos
@@ -499,6 +533,8 @@ def main():
             cmd_setup(" ".join(args[1:]))
         elif cmd == "once":
             ler(verboso=True, esperar=12)
+        elif cmd == "publicar":
+            publicar_no_git()
         elif cmd == "status":
             cmd_status()
         elif cmd == "agendar":
