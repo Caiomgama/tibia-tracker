@@ -225,6 +225,12 @@ function xpInicial(){
 function calc(){
   const c=S.cfg, xpNec=expAt(c.lvAlvo)-expAt(c.lvIni);
   const ajuste=xpInicial()-expAt(c.lvIni);   // o que ele já tinha além do level inicial
+  // As três curvas foram desenhadas para o caminho inteiro (157 -> 300) partindo do
+  // zero. Como parte já estava andada antes do primeiro dia, elas são reescaladas
+  // para cobrir só o que falta — os prazos continuam os mesmos, a exigência diária
+  // cai na proporção do que já estava feito.
+  const fatorMeta=xpNec>0?Math.max(0,(xpNec-ajuste))/xpNec:1;
+  const meta=(arr,i)=>ajuste+arr[i]*fatorMeta;
   // Um dia com fonte "highscores Nd" cobre N dias (PC desligado no meio). Para a
   // média, ele vale como N dias rendendo xp/N — senão viraria um pico seguido de
   // zeros, e a projeção mentiria nos dois sentidos.
@@ -243,9 +249,9 @@ function calc(){
     const tem=typeof d.xp==="number";
     if(tem)acum+=d.xp;
     const peso=TIPOS[d.tipo]==null?null:TIPOS[d.tipo];
-    const mFast=(CURVES.fast[i]-(i?CURVES.fast[i-1]:0));
-    const mReal=(CURVES.real[i]-(i?CURVES.real[i-1]:0));
-    const mCons=(CURVES.cons[i]-(i?CURVES.cons[i-1]:0));
+    const mFast=(CURVES.fast[i]-(i?CURVES.fast[i-1]:0))*fatorMeta;
+    const mReal=(CURVES.real[i]-(i?CURVES.real[i-1]:0))*fatorMeta;
+    const mCons=(CURVES.cons[i]-(i?CURVES.cons[i-1]:0))*fatorMeta;
     const metaReal=peso==null?null:mReal*peso;
     let status="";
     if(tem){
@@ -268,14 +274,14 @@ function calc(){
       lv:tem?levelFromExp(expAt(c.lvIni)+acum):null,
       metaFast:peso==null?null:mFast*peso,metaReal,metaCons:peso==null?null:mCons*peso,
       status,med7,proj,
-      curvaFast:CURVES.fast[i],curvaReal:CURVES.real[i],curvaCons:CURVES.cons[i]});
+      curvaFast:meta(CURVES.fast,i),curvaReal:meta(CURVES.real,i),curvaCons:meta(CURVES.cons,i)});
   }
-  return {rows,xpNec,acum};
+  return {rows,xpNec,acum,meta,fatorMeta,ajuste};
 }
 
 /* ===== render ===== */
 function render(){
-  const c=S.cfg,{rows,xpNec,acum}=calc();
+  const c=S.cfg,{rows,xpNec,acum,meta}=calc();
   const ultimo=[...rows].reverse().find(r=>r.tem);
   const h=hoje();
 
@@ -294,7 +300,7 @@ function render(){
   const pct=Math.min(100,acumOficial/xpNec*100);
   const st=(v,alvo)=>v>=alvo?["À FRENTE","p-acima"]:v>=alvo*0.98?["NO RITMO","p-ritmo"]:["ATRÁS","p-abaixo"];
   const idxHoje=Math.max(0,Math.min(DIAS-1,diffDays(c.inicio,h)));
-  const cf=st(acumOficial,CURVES.fast[idxHoje]),cr=st(acumOficial,CURVES.real[idxHoje]),cc=st(acumOficial,CURVES.cons[idxHoje]);
+  const cf=st(acumOficial,meta(CURVES.fast,idxHoje)),cr=st(acumOficial,meta(CURVES.real,idxHoje)),cc=st(acumOficial,meta(CURVES.cons,idxHoje));
   const med7=ultimo?ultimo.med7:0;
   const falta=Math.max(0,xpNec-acumOficial);
   document.getElementById("cards").innerHTML=[
@@ -303,9 +309,9 @@ function render(){
      anc&&anc.rank?"rank "+anc.rank+" · falta "+kk(falta):"falta "+kk(falta)],
     ["Média 7 dias",kk(med7),med7?Math.round(falta/med7)+" dias nesse ritmo":"sem dados"],
     ["Projeção lv "+c.lvAlvo,ultimo&&ultimo.proj?br(ultimo.proj)+"/"+ultimo.proj.slice(0,4):"—",""],
-    ["Fast — "+br(c.fast),"<span class='pill "+cf[1]+"'>"+cf[0]+"</span>","meta hoje "+kk(CURVES.fast[idxHoje])],
-    ["Realista — "+br(c.real),"<span class='pill "+cr[1]+"'>"+cr[0]+"</span>","meta hoje "+kk(CURVES.real[idxHoje])],
-    ["Conservador — "+br(c.cons),"<span class='pill "+cc[1]+"'>"+cc[0]+"</span>","meta hoje "+kk(CURVES.cons[idxHoje])]
+    ["Fast — "+br(c.fast),"<span class='pill "+cf[1]+"'>"+cf[0]+"</span>","meta hoje "+kk(meta(CURVES.fast,idxHoje))],
+    ["Realista — "+br(c.real),"<span class='pill "+cr[1]+"'>"+cr[0]+"</span>","meta hoje "+kk(meta(CURVES.real,idxHoje))],
+    ["Conservador — "+br(c.cons),"<span class='pill "+cc[1]+"'>"+cc[0]+"</span>","meta hoje "+kk(meta(CURVES.cons,idxHoje))]
   ].map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join("");
 
   // ponto de partida: o que o personagem já tinha quando o acompanhamento começou
@@ -364,7 +370,7 @@ function render(){
 function drawChart(rows,idxHoje,xpNec){
   const W=1000,H=340,P={t:14,r:14,b:26,l:66};
   const n=Math.min(DIAS,Math.max(idxHoje+14,21));
-  const maxY=Math.max(CURVES.fast[n-1],rows[n-1]?.curvaFast||0,...rows.filter(r=>r.tem).map(r=>r.acum))||1;
+  const maxY=Math.max(rows[n-1]?.curvaFast||0,...rows.filter(r=>r.tem).map(r=>r.acum))||1;
   const X=i=>P.l+i/(n-1)*(W-P.l-P.r);
   const Y=v=>H-P.b-(v/maxY)*(H-P.t-P.b);
   const line=(get,color,dash)=>{
