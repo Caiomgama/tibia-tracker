@@ -434,6 +434,16 @@ function ancoraDe(ts){
    ou às 2h de sábado cai na mesma linha — a de sexta. */
 function linhaDoCiclo(ts){ return ancoraDe(ts); }
 
+/* Um marco só é a foto do início do ciclo se foi lido logo depois do Server Save.
+   Lido muito depois, ele já carrega XP daquele dia — então o ganho até o marco
+   seguinte cobre só o fim do dia, e o começo tem de ser somado, não substituído. */
+function marcoAtrasado(l){
+  const anc=l.ancora||ancoraDe(l.ts);
+  const t=new Date(l.ts);
+  const ss=Date.parse(anc+"T00:00:00Z")+horasAteOSS(t)*3600e3;
+  return (t-ss)>2*3600e3;
+}
+
 function marcosDe(lista){
   const m={};
   [...lista].sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(l=>{
@@ -455,11 +465,12 @@ function aplicarLeituras(lista){
   const ultima=a=>porAncora[a][porAncora[a].length-1];
   let mudou=false;
 
-  const grava=(D,valor,fonte)=>{
+  const grava=(D,valor,fonte,somar)=>{
     const d=S.dias[D]||{};
-    if(d.xp===valor&&d.fonte===fonte)return;
-    d.xp=valor; d.fonte=fonte;
-    if(!d.tipo)d.tipo=valor>0?"Hunt":"Não joguei";
+    const novo=somar?((d.xp||0)+valor):valor;
+    if(d.xp===novo&&d.fonte===fonte)return;
+    d.xp=novo; d.fonte=fonte;
+    if(!d.tipo)d.tipo=novo>0?"Hunt":"Não joguei";
     S.dias[D]=d; mudou=true;
   };
 
@@ -468,7 +479,9 @@ function aplicarLeituras(lista){
   for(let i=1;i<datas.length;i++){
     const D=datas[i-1], vao=diffDays(D,datas[i]), ganho=marco(datas[i]).exp-marco(D).exp;
     if(ganho<0)continue;                           // morte ou rollback
-    grava(D,ganho,vao>1?("highscores "+vao+"d"):"highscores");
+    // marco atrasado: o começo do dia já foi lançado antes, então este ganho completa
+    const parcial=marcoAtrasado(marco(D));
+    grava(D,ganho,vao>1?("highscores "+vao+"d"):"highscores",parcial);
   }
 
   // dia em andamento: o que já rendeu desde o Server Save de hoje
