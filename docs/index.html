@@ -94,6 +94,8 @@ td input.xp{text-align:right;font-weight:600}
   <div class="log" id="cfgLog" style="margin-top:8px"></div>
 </div>
 
+<div id="statusBar" class="card" style="margin-bottom:14px;display:none"></div>
+
 <div id="warnBox"></div>
 <div id="ancoraBox"></div>
 
@@ -357,6 +359,7 @@ function render(){
   const xi=document.getElementById("cXpIni");
   if(xi&&document.activeElement!==xi)xi.value=Math.round(xpInicial());
 
+  atualizarStatus();
   drawChart(rows,idxHoje,xpNec);
 
   document.getElementById("foot").innerHTML=
@@ -364,6 +367,55 @@ function render(){
      A XP vem sozinha do highscores — o que conta é quanto rendeu, não quanto tempo levou.<br>
      Fonte: highscores oficial do Tibia.com, filtrado por mundo e vocação — ele se atualiza de hora em hora${anc&&anc.idade?` (na última leitura: <b>${anc.idade}</b>)`:""}.
      Tudo fica salvo neste navegador; use o backup JSON antes de limpar cache ou trocar de máquina.`;
+}
+
+/* ===== faixa de status: quando leu, quando lê de novo, e quão fresco era o dado ===== */
+function emMinutos(m){
+  if(m<1)return "agora";
+  if(m<60)return "há "+m+" min";
+  const hh=Math.floor(m/60), mm=m%60;
+  return "há "+hh+"h"+(mm?String(mm).padStart(2,"0"):"");
+}
+function daquiA(m){
+  if(m<=0)return "a qualquer momento";
+  if(m<60)return "em "+m+" min";
+  const hh=Math.floor(m/60), mm=m%60;
+  return "em "+hh+"h"+(mm?String(mm).padStart(2,"0"):"");
+}
+const hhmm=d=>String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+
+function atualizarStatus(){
+  const el=document.getElementById("statusBar");
+  const anc=S.ancora;
+  if(!el)return;
+  if(!anc||!anc.ts){el.style.display="none";return;}
+  el.style.display="";
+  const lida=new Date(anc.ts), agora=new Date();
+  const desde=Math.max(0,Math.round((agora-lida)/60000));
+
+  // a tarefa roda de hora em hora, no minuto que o leitor sincronizou com o site
+  let prox="";
+  const min=S.cfg.minutoLeitura;
+  if(typeof min==="number"){
+    const p=new Date(agora); p.setSeconds(0,0); p.setMinutes(min);
+    if(p<=agora)p.setHours(p.getHours()+1);
+    prox=`<b>${hhmm(p)}</b> <span style="color:var(--dim)">(${daquiA(Math.round((p-agora)/60000))})</span>`;
+  }else{
+    prox='<span style="color:var(--dim)">de hora em hora</span>';
+  }
+
+  // mais de 90 min sem ler = a rotina provavelmente parou
+  const atrasado=desde>90;
+  const cor=atrasado?"var(--red)":"var(--green)";
+  el.innerHTML=`
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:baseline;font-size:12.5px">
+      <span><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${cor};margin-right:7px"></span>
+        <span style="color:var(--dim)">Última leitura</span> <b>${hhmm(lida)}</b>
+        <span style="color:${atrasado?"var(--red)":"var(--dim)"}">(${emMinutos(desde)})</span></span>
+      <span><span style="color:var(--dim)">Próxima</span> ${prox}</span>
+      ${anc.idade?`<span><span style="color:var(--dim)">Dado do Tibia tinha</span> <b>${anc.idade.replace(/minutes? ago/,"min").replace(/hours? ago/,"h").replace("less than a min","menos de 1 min")}</b> <span style="color:var(--dim)">quando foi lido</span></span>`:""}
+      ${atrasado?'<span style="color:var(--red)">a rotina parece parada — o PC precisa estar ligado</span>':""}
+    </div>`;
 }
 
 /* ===== gráfico ===== */
@@ -509,7 +561,11 @@ async function buscarPublicado(){
     if(!r.ok)return false;
     const j=await r.json();
     if(!j.leituras||!j.leituras.length)return false;
-    if(j.cfg&&j.cfg.char){S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;fillCfg();}
+    if(j.cfg&&j.cfg.char){
+      S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;
+      if(typeof j.cfg.minuto_leitura==="number")S.cfg.minutoLeitura=j.cfg.minuto_leitura;
+      fillCfg();
+    }
     aplicarLeituras(j.leituras);
     ULTIMA_PUBLICACAO=j.atualizado||null;
     return true;
@@ -524,7 +580,11 @@ async function detectarServidor(){
     const j=await r.json();
     if(!j.servidor)return false;
     MODO_SERVIDOR=true;
-    if(j.cfg&&j.cfg.char){S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;fillCfg();}
+    if(j.cfg&&j.cfg.char){
+      S.cfg.char=j.cfg.char;S.cfg.world=j.cfg.mundo||S.cfg.world;
+      if(typeof j.cfg.minuto_leitura==="number")S.cfg.minutoLeitura=j.cfg.minuto_leitura;
+      fillCfg();
+    }
     aplicarLeituras(j.leituras);
     return true;
   }catch(e){return false;}
@@ -644,9 +704,12 @@ function fillCfg(){const c=S.cfg;
 /* ===== boot ===== */
 S=load();
 fillCfg();render();
+setInterval(atualizarStatus,30000);   // mantém o "há X min" vivo
 if(window.LEITURAS){
   if(window.LEITURAS_CFG&&window.LEITURAS_CFG.char){
-    S.cfg.char=window.LEITURAS_CFG.char;S.cfg.world=window.LEITURAS_CFG.mundo||S.cfg.world;fillCfg();
+    S.cfg.char=window.LEITURAS_CFG.char;S.cfg.world=window.LEITURAS_CFG.mundo||S.cfg.world;
+    if(typeof window.LEITURAS_CFG.minuto_leitura==="number")S.cfg.minutoLeitura=window.LEITURAS_CFG.minuto_leitura;
+    fillCfg();
   }
   aplicarLeituras(window.LEITURAS);
 }
