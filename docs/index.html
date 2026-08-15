@@ -210,6 +210,10 @@ function kk(n){if(!n)return "0";const a=Math.abs(n);
 /* ===== cálculo ===== */
 function calc(){
   const c=S.cfg, xpNec=expAt(c.lvAlvo)-expAt(c.lvIni);
+  // XP que a leitura conhece e os dias não: entra no acumulado desde a primeira linha,
+  // senão o level da tabela fica atrás do level real do personagem
+  const anc0=(S.ancora&&S.ancora.fonte==="highscores")?S.ancora:null;
+  const ajuste=anc0?(anc0.ajuste||0):0;
   // Um dia com fonte "highscores Nd" cobre N dias (PC desligado no meio). Para a
   // média, ele vale como N dias rendendo xp/N — senão viraria um pico seguido de
   // zeros, e a projeção mentiria nos dois sentidos.
@@ -221,7 +225,7 @@ function calc(){
     for(let k=0;k<n;k++)porDia[addDays(dt,-k)]=d.xp/n;
   }
 
-  const rows=[]; let acum=0;
+  const rows=[]; let acum=ajuste;
   for(let i=0;i<DIAS;i++){
     const data=addDays(c.inicio,i);
     const d=S.dias[data]||{};
@@ -272,9 +276,7 @@ function render(){
   // só a distribuição dela no calendário. Quando as duas divergem, mostramos as duas.
   const anc=(S.ancora&&S.ancora.fonte==="highscores")?S.ancora:null;
   const ajuste=anc?(anc.ajuste||0):0;
-  // a leitura é a verdade sobre o total; o ajuste guarda o que ela sabe a mais que os dias,
-  // e continua valendo quando você lança XP nova depois dela
-  const acumOficial=acum+ajuste;
+  const acumOficial=acum;      // calc() já soma o ajuste
   const dif=ajuste;
 
   // cards
@@ -315,7 +317,16 @@ function render(){
   // tabela — mostra até 7 dias além do último preenchido
   const limite=Math.max(idxHoje+3,(ultimo?ultimo.i:0)+3);
   const tb=document.getElementById("tbody");
-  tb.innerHTML=rows.filter(r=>r.i<=limite).map(r=>{
+  const linhaAjuste=ajuste?`<tr style="opacity:.75">
+      <td>antes de ${br(c.inicio)}</td>
+      <td colspan="2" style="color:var(--dim)">XP feita antes de começar a lançar</td>
+      <td class="num">${fmt(ajuste)}</td>
+      <td class="num">${fmt(expAt(c.lvIni)+ajuste-expAt(c.lvIni))}</td>
+      <td class="num">${levelFromExp(expAt(c.lvIni)+ajuste)}</td>
+      <td colspan="3" style="color:var(--dim);font-size:11px">não entra na média de 7 dias</td>
+      <td></td><td style="color:var(--dim);font-size:11px">ajuste</td>
+    </tr>`:"";
+  tb.innerHTML=linhaAjuste+rows.filter(r=>r.i<=limite).map(r=>{
     const cls=r.data===h?"today":((r.data>h&&!r.tem)?"future":"");
     const pill=r.status?`<span class="pill ${{ACIMA:"p-acima","NO RITMO":"p-ritmo",ABAIXO:"p-abaixo",PLANEJADO:"p-off"}[r.status]}">${r.status}</span>`:"";
     return `<tr class="${cls}" data-d="${r.data}">
