@@ -146,7 +146,7 @@ function levelFromExp(e){let L=1;while(expAt(L+1)<=e)L++;return L;}
 
 /* ===== estado ===== */
 const DEF={
-  versao:3,
+  versao:4,
   cfg:{char:"Caio Gama",world:"Yovera",lvIni:157,lvAlvo:300,inicio:"2026-08-12",
        fast:"2026-09-24",real:"2026-10-11",cons:"2026-11-14",auto:1},
   dias:{
@@ -160,7 +160,19 @@ const DEF={
    frente do dia em que a XP foi feita. Só remapeia se os valores continuarem
    intactos — se você já editou algum, nada é tocado. */
 function migrar(S){
-  if(S.versao>=3)return S;
+  if(S.versao>=4)return S;
+  if(S.versao>=3){
+    // a soma do "marco atrasado" era reaplicada a cada atualização e inflava o dia.
+    // Limpa o que veio do highscores para ser recalculado das leituras; o 14/08 volta
+    // ao valor que estava lançado à mão antes do primeiro fechamento.
+    for(const [dt,d] of Object.entries(S.dias)){
+      if(!/^highscores/.test(d.fonte||""))continue;
+      if(dt==="2026-08-14"){d.xp=2072000;d.fonte="manual";}
+      else{delete d.xp;delete d.fonte;}
+      delete d.xpAntes;
+    }
+    S.versao=4;return S;
+  }
   if(S.versao>=2){                       // horas de hunt deixaram de ser rastreadas
     for(const d of Object.values(S.dias))delete d.horas;
     S.versao=3; return S;
@@ -175,7 +187,7 @@ function migrar(S){
     if(S.cfg.inicio==="2026-08-13")S.cfg.inicio="2026-08-12";
   }
   for(const d of Object.values(S.dias))delete d.horas;
-  S.versao=3;
+  S.versao=4;
   return S;
 }
 let S=null;   // carregado no boot, depois das funções de data
@@ -221,7 +233,9 @@ function xpInicial(){
   if(!anc)return (typeof S.cfg.xpInicial==="number")?S.cfg.xpInicial:expAt(S.cfg.lvIni);
   let soma=0;
   for(const d of Object.values(S.dias))if(typeof d.xp==="number")soma+=d.xp;
-  return anc.exp-soma;
+  // se os dias somarem mais que a XP real, algo foi lançado a mais: não deixa o
+  // ponto de partida ficar abaixo do level onde tudo começou
+  return Math.max(expAt(S.cfg.lvIni),anc.exp-soma);
 }
 
 function calc(){
@@ -532,7 +546,16 @@ function aplicarLeituras(lista){
 
   const grava=(D,valor,fonte,somar)=>{
     const d=S.dias[D]||{};
-    const novo=somar?((d.xp||0)+valor):valor;
+    let novo=valor;
+    if(somar){
+      // guarda uma única vez o que havia antes do fechamento; recompor a partir daí
+      // deixa a operação idempotente — sem isso, cada redesenho somava de novo
+      if(typeof d.xpAntes!=="number")
+        d.xpAntes=(typeof d.xp==="number"&&!/^highscores/.test(d.fonte||""))?d.xp:0;
+      novo=d.xpAntes+valor;
+    }else if(typeof d.xpAntes==="number"){
+      delete d.xpAntes;
+    }
     if(d.xp===novo&&d.fonte===fonte)return;
     d.xp=novo; d.fonte=fonte;
     if(!d.tipo)d.tipo=novo>0?"Hunt":"Não joguei";
