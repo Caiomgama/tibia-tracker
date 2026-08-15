@@ -404,6 +404,17 @@ function atualizarStatus(){
     prox='<span style="color:var(--dim)">de hora em hora</span>';
   }
 
+  // o dado lido tem a idade que o próprio Tibia informa: o corte real do que já conta
+  const idadeMin=(()=>{
+    const t=anc.idade;
+    if(!t)return null;
+    if(/less than|just now/i.test(t))return 0;
+    const hh=/(\d+)\s*hour/i.exec(t); if(hh)return +hh[1]*60;
+    const mm=/(\d+)\s*min/i.exec(t);  if(mm)return +mm[1];
+    return null;
+  })();
+  const corte=idadeMin==null?null:new Date(lida.getTime()-idadeMin*60000);
+
   // mais de 90 min sem ler = a rotina provavelmente parou
   const atrasado=desde>90;
   const cor=atrasado?"var(--red)":"var(--green)";
@@ -413,7 +424,9 @@ function atualizarStatus(){
         <span style="color:var(--dim)">Última leitura</span> <b>${hhmm(lida)}</b>
         <span style="color:${atrasado?"var(--red)":"var(--dim)"}">(${emMinutos(desde)})</span></span>
       <span><span style="color:var(--dim)">Próxima</span> ${prox}</span>
-      ${anc.idade?`<span><span style="color:var(--dim)">Dado do Tibia tinha</span> <b>${anc.idade.replace(/minutes? ago/,"min").replace(/hours? ago/,"h").replace("less than a min","menos de 1 min")}</b> <span style="color:var(--dim)">quando foi lido</span></span>`:""}
+      ${corte?`<span title="O Tibia publica o highscores de hora em hora. XP feita depois desse horário só aparece na próxima publicação.">
+        <span style="color:var(--dim)">XP contabilizada até</span> <b>${hhmm(corte)}</b>
+        <span style="color:var(--dim)">(${emMinutos(Math.round((agora-corte)/60000))} — o Tibia publica de hora em hora)</span></span>`:""}
       ${atrasado?'<span style="color:var(--red)">a rotina parece parada — o PC precisa estar ligado</span>':""}
     </div>`;
 }
