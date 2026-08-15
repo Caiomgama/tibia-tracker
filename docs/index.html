@@ -470,7 +470,7 @@ function aplicarLeituras(lista){
   const parcial=ultima(A).exp-marco(A).exp;
   if(parcial>0)grava(emAndamento,parcial,"highscores parcial");
 
-  // o que a leitura sabe e os dias não sabem: XP feita antes de você começar a lançar
+  // ponto de partida: o que o personagem já tinha quando o acompanhamento começou
   let somaDias=0;
   for(const d of Object.values(S.dias))if(typeof d.xp==="number")somaDias+=d.xp;
   const u=ultima(A);
