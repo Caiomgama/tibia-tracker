@@ -79,6 +79,7 @@ td input.xp{text-align:right;font-weight:600}
     <div><label>Personagem</label><input id="cChar" placeholder="Nome exato do char"></div>
     <div><label>Mundo (auto)</label><input id="cWorld" placeholder="detectado pelo Tibia.com"></div>
     <div><label>Level inicial</label><input id="cLvIni" type="number"></div>
+    <div><label>XP no início</label><input id="cXpIni" type="number" placeholder="calculado pela leitura"></div>
     <div><label>Level alvo</label><input id="cLvAlvo" type="number"></div>
     <div><label>Início</label><input id="cInicio" type="date"></div>
     <div><label>Prazo Fast</label><input id="cFast" type="date"></div>
@@ -208,12 +209,22 @@ function kk(n){if(!n)return "0";const a=Math.abs(n);
   if(a>=1e3)return (n/1e3).toFixed(1)+"k";return String(Math.round(n));}
 
 /* ===== cálculo ===== */
+/* XP total do personagem quando o acompanhamento começou.
+
+   A leitura do highscores é a verdade sobre o total de agora; tirando dela tudo que
+   já foi lançado nos dias, sobra o ponto de partida. Somando os dias de volta, o
+   resultado bate com o jogo — level e acumulado inclusive. */
+function xpInicial(){
+  const anc=(S.ancora&&S.ancora.fonte==="highscores")?S.ancora:null;
+  if(!anc)return (typeof S.cfg.xpInicial==="number")?S.cfg.xpInicial:expAt(S.cfg.lvIni);
+  let soma=0;
+  for(const d of Object.values(S.dias))if(typeof d.xp==="number")soma+=d.xp;
+  return anc.exp-soma;
+}
+
 function calc(){
   const c=S.cfg, xpNec=expAt(c.lvAlvo)-expAt(c.lvIni);
-  // XP que a leitura conhece e os dias não: entra no acumulado desde a primeira linha,
-  // senão o level da tabela fica atrás do level real do personagem
-  const anc0=(S.ancora&&S.ancora.fonte==="highscores")?S.ancora:null;
-  const ajuste=anc0?(anc0.ajuste||0):0;
+  const ajuste=xpInicial()-expAt(c.lvIni);   // o que ele já tinha além do level inicial
   // Um dia com fonte "highscores Nd" cobre N dias (PC desligado no meio). Para a
   // média, ele vale como N dias rendendo xp/N — senão viraria um pico seguido de
   // zeros, e a projeção mentiria nos dois sentidos.
@@ -297,13 +308,13 @@ function render(){
     ["Conservador — "+br(c.cons),"<span class='pill "+cc[1]+"'>"+cc[0]+"</span>","meta hoje "+kk(CURVES.cons[idxHoje])]
   ].map(x=>`<div class="card"><div class="k">${x[0]}</div><div class="v">${x[1]}</div><div class="s">${x[2]}</div></div>`).join("");
 
-  // ajuste: o que a leitura sabe a mais que a soma dos dias
+  // ponto de partida: o que o personagem já tinha quando o acompanhamento começou
   const ab=document.getElementById("ancoraBox");
   if(anc&&Math.abs(ajuste)>=1000){
-    ab.innerHTML=`<div class="warn">Somando <b>${kk(ajuste)}</b> de ajuste: o highscores diz que você tem
-      ${fmt(anc.exp-expAt(c.lvIni))} xp desde o level ${c.lvIni}, e os dias lançados somam ${fmt(acum)}.
-      A diferença é XP que você fez antes de começar a lançar — ela entra no acumulado sem virar linha de dia,
-      então não some quando os dias forem fechados pelo highscores.</div>`;
+    const xi=xpInicial();
+    ab.innerHTML=`<div class="warn">Ponto de partida: em ${br(c.inicio)} você tinha <b>${fmt(xi)}</b> xp (level ${levelFromExp(xi)}),
+      já ${kk(ajuste)} além do level ${c.lvIni}. Somando os dias lançados, chega em ${fmt(anc.exp)} —
+      exatamente o que o highscores mostra. Esse valor não entra na média de 7 dias.</div>`;
   }else ab.innerHTML="";
 
   // aviso de leitura
@@ -317,16 +328,7 @@ function render(){
   // tabela — mostra até 7 dias além do último preenchido
   const limite=Math.max(idxHoje+3,(ultimo?ultimo.i:0)+3);
   const tb=document.getElementById("tbody");
-  const linhaAjuste=ajuste?`<tr style="opacity:.75">
-      <td>antes de ${br(c.inicio)}</td>
-      <td colspan="2" style="color:var(--dim)">XP feita antes de começar a lançar</td>
-      <td class="num">${fmt(ajuste)}</td>
-      <td class="num">${fmt(expAt(c.lvIni)+ajuste-expAt(c.lvIni))}</td>
-      <td class="num">${levelFromExp(expAt(c.lvIni)+ajuste)}</td>
-      <td colspan="3" style="color:var(--dim);font-size:11px">não entra na média de 7 dias</td>
-      <td></td><td style="color:var(--dim);font-size:11px">ajuste</td>
-    </tr>`:"";
-  tb.innerHTML=linhaAjuste+rows.filter(r=>r.i<=limite).map(r=>{
+  tb.innerHTML=rows.filter(r=>r.i<=limite).map(r=>{
     const cls=r.data===h?"today":((r.data>h&&!r.tem)?"future":"");
     const pill=r.status?`<span class="pill ${{ACIMA:"p-acima","NO RITMO":"p-ritmo",ABAIXO:"p-abaixo",PLANEJADO:"p-off"}[r.status]}">${r.status}</span>`:"";
     return `<tr class="${cls}" data-d="${r.data}">
@@ -344,6 +346,10 @@ function render(){
       <td style="color:var(--dim)">${r.proj?br(r.proj)+"/"+r.proj.slice(2,4):""}</td>
       <td style="color:var(--dim);font-size:11px">${r.d.fonte||""}</td>
     </tr>`;}).join("");
+
+  // mantém o ponto de partida à vista, sem atrapalhar quem está digitando nele
+  const xi=document.getElementById("cXpIni");
+  if(xi&&document.activeElement!==xi)xi.value=Math.round(xpInicial());
 
   drawChart(rows,idxHoje,xpNec);
 
@@ -560,6 +566,7 @@ document.getElementById("btnSaveCfg").onclick=()=>{
   const c=S.cfg;
   c.char=cChar.value.trim(); c.world=cWorld.value.trim();
   c.lvIni=+cLvIni.value||157; c.lvAlvo=+cLvAlvo.value||300;
+  if(cXpIni.value.trim()!=="")c.xpInicial=+cXpIni.value;
   c.inicio=cInicio.value||c.inicio; c.fast=cFast.value; c.real=cReal.value; c.cons=cCons.value;
   c.auto=+cAuto.value;
   save();render();document.getElementById("cfgLog").textContent="Salvo.";
@@ -612,7 +619,8 @@ document.getElementById("btnReset").onclick=()=>{
 };
 function fillCfg(){const c=S.cfg;
   cChar.value=c.char;cWorld.value=c.world;cLvIni.value=c.lvIni;cLvAlvo.value=c.lvAlvo;
-  cInicio.value=c.inicio;cFast.value=c.fast;cReal.value=c.real;cCons.value=c.cons;cAuto.value=c.auto;}
+  cInicio.value=c.inicio;cFast.value=c.fast;cReal.value=c.real;cCons.value=c.cons;cAuto.value=c.auto;
+  cXpIni.value=Math.round(xpInicial());}
 
 /* ===== boot ===== */
 S=load();
