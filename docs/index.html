@@ -210,6 +210,17 @@ function kk(n){if(!n)return "0";const a=Math.abs(n);
 /* ===== cálculo ===== */
 function calc(){
   const c=S.cfg, xpNec=expAt(c.lvAlvo)-expAt(c.lvIni);
+  // Um dia com fonte "highscores Nd" cobre N dias (PC desligado no meio). Para a
+  // média, ele vale como N dias rendendo xp/N — senão viraria um pico seguido de
+  // zeros, e a projeção mentiria nos dois sentidos.
+  const porDia={};
+  for(const [dt,d] of Object.entries(S.dias)){
+    if(typeof d.xp!=="number")continue;
+    const m=/^highscores (\d+)d$/.exec(d.fonte||"");
+    const n=m?Math.max(1,+m[1]):1;
+    for(let k=0;k<n;k++)porDia[addDays(dt,-k)]=d.xp/n;
+  }
+
   const rows=[]; let acum=0;
   for(let i=0;i<DIAS;i++){
     const data=addDays(c.inicio,i);
@@ -229,11 +240,11 @@ function calc(){
       else if(d.xp>=metaReal*0.85)status="NO RITMO";
       else status="ABAIXO";
     }
-    // média dos últimos 7 dias com dado preenchido
+    // média dos últimos 7 dias que realmente foram medidos
     let soma=0,qtd=0;
     for(let j=Math.max(0,i-6);j<=i;j++){
-      const dd=S.dias[addDays(c.inicio,j)];
-      if(dd&&typeof dd.xp==="number"){soma+=dd.xp;qtd++;}
+      const v=porDia[addDays(c.inicio,j)];
+      if(typeof v==="number"){soma+=v;qtd++;}
     }
     const med7=qtd?soma/qtd:null;
     const falta=Math.max(0,xpNec-acum);
@@ -311,7 +322,9 @@ function render(){
       <td>${br(r.data)}<span style="color:var(--dim)"> ${["dom","seg","ter","qua","qui","sex","sáb"][new Date(r.data+"T12:00:00").getDay()]}</span></td>
       <td><select data-f="tipo">${Object.keys(TIPOS).map(t=>`<option ${t===(r.d.tipo||"")?"selected":""}>${t}</option>`).join("")}</select></td>
       <td><select data-f="hunt">${HUNTS.map(t=>`<option ${t===(r.d.hunt||"")?"selected":""}>${t}</option>`).join("")}</select></td>
-      <td class="num"><input data-f="xp" class="xp" value="${r.d.xp??""}"></td>
+      <td class="num"><input data-f="xp" class="xp" value="${r.d.xp??""}">${
+        /^highscores (\d+)d$/.test(r.d.fonte||"")
+          ? `<div style="font-size:10px;color:var(--gold)">cobre ${/(\d+)d/.exec(r.d.fonte)[1]} dias</div>` : ""}</td>
       <td class="num">${r.tem?fmt(r.acum):""}</td>
       <td class="num">${r.lv??""}</td>
       <td class="num" style="color:var(--dim)">${r.metaReal==null?"":kk(r.metaReal)}</td>
