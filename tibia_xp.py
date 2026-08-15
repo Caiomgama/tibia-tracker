@@ -157,7 +157,8 @@ def minutos_de_idade(txt):
     return None
 
 
-MARGEM = 4   # minutos de folga depois da atualização estimada
+MARGEM = 4     # folga inicial depois da atualização estimada
+MARGEM_MAX = 35  # o site publica com atraso variável; até aqui vale esperar mais
 
 
 def sincronizar_agenda(cfg, verboso=True):
@@ -170,13 +171,23 @@ def sincronizar_agenda(cfg, verboso=True):
     idade = minutos_de_idade(ULTIMA_IDADE)
     if idade is None:
         return
+    margem = cfg.get("margem", MARGEM)
+    if idade >= 60:
+        # o dado é de um ciclo inteiro atrás: a leitura caiu antes de o site publicar
+        # a atualização daquela hora. Esperar mais um pouco na próxima.
+        margem = min(MARGEM_MAX, margem + 8)
+        cfg["margem"] = margem
+        if verboso:
+            print("  leitura cedo demais (dado com %d min) — margem agora %d min" % (idade, margem))
+
     agora = datetime.datetime.now()
-    proxima = agora - datetime.timedelta(minutes=idade) + datetime.timedelta(minutes=60)
-    alvo = (proxima + datetime.timedelta(minutes=MARGEM)).replace(second=0, microsecond=0)
+    proxima = agora - datetime.timedelta(minutes=idade % 60) + datetime.timedelta(minutes=60)
+    alvo = (proxima + datetime.timedelta(minutes=margem)).replace(second=0, microsecond=0)
     minuto = alvo.minute
 
     atual = cfg.get("minuto_leitura")
     if atual is not None and abs(((minuto - atual + 30) % 60) - 30) <= 1:
+        gravar(CFG_F, cfg)
         return                                    # já está sincronizado
     import subprocess
     bat = os.path.join(BASE, "atualizar_xp.bat")
