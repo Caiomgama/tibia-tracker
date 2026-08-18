@@ -523,6 +523,33 @@ function marcoAtrasado(l){
   return (t-ss)>2*3600e3;
 }
 
+/* Server Save que ABRE o ciclo de uma ancora, em ms UTC */
+function ssDe(anc){
+  return Date.parse(anc+"T00:00:00Z")+horasAteOSS(new Date(anc+"T12:00:00Z"))*3600e3;
+}
+
+/* Minutos jogados dentro de uma janela, pelas sessoes do tibia-statistic.
+   Chaves "DD.MM.AAAA", horarios em UTC, blocos de 10 min; end:"Online" = agora. */
+function minutosOnline(ini,fim){
+  const SS=window.SESSOES;
+  if(!SS||!(fim>ini))return 0;
+  const hm=v=>{const m=/^(\d{1,2}):(\d{2})$/.exec(String(v||""));return m?(+m[1]*60+ +m[2]):null;};
+  let tot=0;
+  for(const k in SS){
+    const m=/^(\d{2})\.(\d{2})\.(\d{4})$/.exec(k); if(!m)continue;
+    const base=Date.parse(m[3]+"-"+m[2]+"-"+m[1]+"T00:00:00Z");
+    for(const ses of (SS[k]||[])){
+      const a=hm(ses.start); if(a==null)continue;
+      const b=hm(ses.end);
+      let i0=base+a*6e4, i1=(b==null)?Date.now():base+b*6e4;
+      if(i1<i0)i1+=864e5;                       // sessao que virou o dia
+      const lo=Math.max(ini,i0), hi=Math.min(fim,i1);
+      if(hi>lo)tot+=(hi-lo)/6e4;
+    }
+  }
+  return tot;
+}
+
 function marcosDe(lista){
   const m={};
   [...lista].sort((a,b)=>String(a.ts)<String(b.ts)?-1:1).forEach(l=>{
@@ -562,20 +589,44 @@ function aplicarLeituras(lista){
     S.dias[D]=d; mudou=true;
   };
 
-  // dias já fechados: o que rendeu entre dois Server Saves pertence ao dia que começou
-  // no primeiro deles — o marco seguinte só é a foto do fechamento
+  // dias ja fechados: o que rendeu entre dois Server Saves pertence ao dia que comecou
+  // no primeiro deles. Quando o marco que FECHA o dia vem atrasado (rotina parada, PC
+  // dormindo), ele ja carrega XP do dia seguinte. Testar o marco que ABRE, como se fazia
+  // aqui, nao pega esse caso: em 17/08/2026 o de abertura estava pontual e mesmo assim o
+  // dia 16 absorveu a manha inteira do 17. Agora o ganho e repartido pelos minutos
+  // jogados de cada lado do Server Save, usando as sessoes do tibia-statistic.
+  const extra={};
   for(let i=1;i<datas.length;i++){
-    const D=datas[i-1], vao=diffDays(D,datas[i]), ganho=marco(datas[i]).exp-marco(D).exp;
+    const D=datas[i-1], AA=datas[i];
+    const vao=diffDays(D,AA), ganho=marco(AA).exp-marco(D).exp;
     if(ganho<0)continue;                           // morte ou rollback
-    // marco atrasado: o começo do dia já foi lançado antes, então este ganho completa
-    const parcial=marcoAtrasado(marco(D));
-    grava(D,ganho,vao>1?("highscores "+vao+"d"):"highscores",parcial);
+    let gD=ganho, fD=vao>1?("highscores "+vao+"d"):"highscores";
+    if(marcoAtrasado(marco(AA))){
+      const ss=ssDe(AA);
+      const antes =minutosOnline(Date.parse(marco(D).ts),ss);
+      const depois=minutosOnline(ss,Date.parse(marco(AA).ts));
+      if(depois>0&&(antes+depois)>0){
+        gD=Math.round(ganho*antes/(antes+depois));
+        extra[AA]=(extra[AA]||0)+(ganho-gD);
+        fD+=" + sessoes";
+      }
+    }
+    const ex=extra[D]||0;
+    grava(D,gD+ex,fD+((ex&&fD.indexOf("sessoes")<0)?" + sessoes":""),marcoAtrasado(marco(D)));
   }
 
-  // dia em andamento: o que já rendeu desde o Server Save de hoje
+  // dia em andamento: o que ja rendeu desde o Server Save de hoje
   const A=datas[datas.length-1], emAndamento=A;
-  const parcial=ultima(A).exp-marco(A).exp;
-  if(parcial>0)grava(emAndamento,parcial,"highscores parcial");
+  let parcial=ultima(A).exp-marco(A).exp, fonteP="highscores parcial";
+  // o level anda em tempo real, a XP so quando o highscores publica: enquanto nao sai,
+  // o piso do level mostra o que ja foi feito em vez de exibir zero
+  const piso=ultima(A).piso;
+  if(typeof piso==="number"&&(piso-marco(A).exp)>parcial){
+    parcial=piso-marco(A).exp;
+    fonteP="level "+ultima(A).level+" (ainda nao publicado)";
+  }
+  parcial+=(extra[A]||0);
+  if(parcial>0)grava(emAndamento,parcial,fonteP);
 
   // ponto de partida: o que o personagem já tinha quando o acompanhamento começou
   let somaDias=0;
@@ -602,6 +653,7 @@ async function buscarPublicado(){
       if(typeof j.cfg.minuto_leitura==="number")S.cfg.minutoLeitura=j.cfg.minuto_leitura;
       fillCfg();
     }
+    if(j.sessoes)window.SESSOES=j.sessoes;
     aplicarLeituras(j.leituras);
     ULTIMA_PUBLICACAO=j.atualizado||null;
     return true;

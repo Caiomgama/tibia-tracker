@@ -350,6 +350,7 @@ def escrever_js(dados, cfg):
     (layout do GitHub Pages), escreve nos dois lugares.
     """
     leituras = dados.get("leituras", [])
+    sessoes = dados.get("sessoes", {})   # horarios de jogo: a pagina reparte o dia com eles
     destinos = [BASE]
     docs = os.path.join(BASE, "docs")
     if os.path.isdir(docs):
@@ -358,8 +359,9 @@ def escrever_js(dados, cfg):
         with open(os.path.join(d, "leituras.js"), "w", encoding="utf-8") as f:
             f.write("window.LEITURAS=" + json.dumps(leituras, ensure_ascii=False) + ";\n")
             f.write("window.LEITURAS_CFG=" + json.dumps(cfg, ensure_ascii=False) + ";\n")
+            f.write("window.SESSOES=" + json.dumps(sessoes, ensure_ascii=False) + ";\n")
         with open(os.path.join(d, "leituras.json"), "w", encoding="utf-8") as f:
-            json.dump({"leituras": leituras, "cfg": cfg,
+            json.dump({"leituras": leituras, "cfg": cfg, "sessoes": sessoes,
                        "atualizado": datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z"},
                       f, ensure_ascii=False)
 
