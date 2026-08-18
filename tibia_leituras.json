@@ -690,6 +690,16 @@
    "rank": 827,
    "fonte": "highscores",
    "idade": "20 minutes ago"
+  },
+  {
+   "ts": "2026-08-18T04:32:28Z",
+   "ancora": "2026-08-17",
+   "exp": 127987091,
+   "level": 203,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 18.08.2026 04:13",
+   "piso": 135360200
   }
  ],
  "2026-08-14": {
@@ -698,5 +708,160 @@
   "rank": 941,
   "fonte": "highscores",
   "ts": "2026-08-14T16:19:50"
+ },
+ "sessoes": {
+  "18.08.2026": [],
+  "17.08.2026": [
+   {
+    "start": "02:40",
+    "end": "02:50",
+    "duration": "10m"
+   },
+   {
+    "start": "12:20",
+    "end": "13:00",
+    "duration": "40m"
+   },
+   {
+    "start": "18:30",
+    "end": "19:31",
+    "duration": "1h 0m"
+   },
+   {
+    "start": "23:00",
+    "end": "23:20",
+    "duration": "19m"
+   },
+   {
+    "start": "23:50",
+    "end": "Online",
+    "duration": "4h 41m"
+   }
+  ],
+  "16.08.2026": [
+   {
+    "start": "03:30",
+    "end": "03:50",
+    "duration": "19m"
+   },
+   {
+    "start": "10:30",
+    "end": "14:30",
+    "duration": "4h 0m"
+   },
+   {
+    "start": "17:00",
+    "end": "02:30",
+    "duration": "9h 29m"
+   }
+  ],
+  "15.08.2026": [
+   {
+    "start": "00:10",
+    "end": "01:50",
+    "duration": "1h 39m"
+   },
+   {
+    "start": "02:10",
+    "end": "03:00",
+    "duration": "50m"
+   },
+   {
+    "start": "03:10",
+    "end": "04:40",
+    "duration": "1h 29m"
+   },
+   {
+    "start": "11:20",
+    "end": "14:40",
+    "duration": "3h 20m"
+   },
+   {
+    "start": "16:20",
+    "end": "16:30",
+    "duration": "10m"
+   },
+   {
+    "start": "17:20",
+    "end": "17:30",
+    "duration": "9m"
+   },
+   {
+    "start": "18:31",
+    "end": "19:00",
+    "duration": "29m"
+   },
+   {
+    "start": "19:30",
+    "end": "19:40",
+    "duration": "10m"
+   },
+   {
+    "start": "22:50",
+    "end": "23:30",
+    "duration": "39m"
+   }
+  ],
+  "14.08.2026": [
+   {
+    "start": "12:10",
+    "end": "14:00",
+    "duration": "1h 50m"
+   }
+  ],
+  "13.08.2026": [
+   {
+    "start": "12:40",
+    "end": "13:40",
+    "duration": "1h 0m"
+   },
+   {
+    "start": "15:40",
+    "end": "16:20",
+    "duration": "40m"
+   },
+   {
+    "start": "18:00",
+    "end": "19:00",
+    "duration": "1h 0m"
+   },
+   {
+    "start": "19:10",
+    "end": "19:50",
+    "duration": "40m"
+   },
+   {
+    "start": "20:20",
+    "end": "21:50",
+    "duration": "1h 30m"
+   },
+   {
+    "start": "23:40",
+    "end": "03:50",
+    "duration": "4h 9m"
+   }
+  ],
+  "12.08.2026": [
+   {
+    "start": "02:50",
+    "end": "03:00",
+    "duration": "10m"
+   },
+   {
+    "start": "12:10",
+    "end": "12:40",
+    "duration": "30m"
+   },
+   {
+    "start": "14:00",
+    "end": "14:10",
+    "duration": "10m"
+   },
+   {
+    "start": "23:10",
+    "end": "03:00",
+    "duration": "3h 50m"
+   }
+  ]
  }
 }
