@@ -84,14 +84,14 @@ def gravar(path, obj):
     os.replace(tmp, path)
 
 
-def get(url, tentativas=3):
+def get(url, tentativas=3, idioma="pt-BR,pt;q=0.9,en;q=0.8"):
     erro = None
     for n in range(tentativas):
         try:
             req = urllib.request.Request(url, headers={
                 "User-Agent": UA,
                 "Accept": "text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8",
-                "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+                "Accept-Language": idioma,
                 "Accept-Encoding": "gzip"})
             r = urllib.request.urlopen(req, timeout=30)
             raw = r.read()
@@ -399,6 +399,94 @@ def publicar_no_git(verboso=True):
 
 
 
+# ------------------------------------------- fonte alternativa: TibiaStatistic
+#
+# O Tibia.com fica atrás de um desafio gerenciado do Cloudflare quando acessado
+# de fora de uma conexão residencial (testado do servidor do Caio em 18/08/2026:
+# 403 + "Just a moment...", inclusive na home). O tibia-statistic.com serve os
+# mesmos números sem desafio nenhum, e é o que permite a rotina rodar fora do PC.
+#
+# Cuidado aprendido: o campo de LEVEL dessa página contradiz o próprio campo de
+# XP (mostrava "Level 203" com totalExperience de level 199, sem morte no meio).
+# Por isso só a XP é aproveitada — o level é derivado dela pela fórmula oficial.
+
+TS_URL = "https://www.tibia-statistic.com/statistics/players/%s"
+
+
+def _ts_json(html_txt, nome_var):
+    m = re.search(r"var\s+" + nome_var + r"\s*=\s*([\[{].*?[\]}]);", html_txt, re.S)
+    return json.loads(m.group(1)) if m else None
+
+
+def ler_tibiastatistic(verboso=True):
+    """Uma leitura via tibia-statistic.com. Mesmo formato de ler()."""
+    cfg = carregar(CFG_F, {})
+    if not cfg.get("char"):
+        raise RuntimeError('nenhum personagem configurado')
+    nome = cfg["char"]
+
+    # em ingles o HTML e estavel; em pt-BR o site troca os rotulos
+    pagina = get(TS_URL % urllib.parse.quote(nome.lower()), idioma="en-US,en;q=0.9")
+    dias = _ts_json(pagina, "rawData")
+    if not dias:
+        raise RuntimeError("nao achei rawData na pagina do tibia-statistic")
+
+    exp = None
+    for d in dias:                                   # o ultimo com total preenchido
+        if d.get("totalExperience"):
+            exp = int(d["totalExperience"])
+    if exp is None:
+        raise RuntimeError("tibia-statistic sem totalExperience preenchido")
+
+    m = re.search(r"Last updated\s*([\d.]+\s+[\d:]+)", pagina)
+    idade = ("atualizado " + m.group(1)) if m else None
+    sessoes = _ts_json(pagina, "sessionsByDate") or {}
+
+    # O LEVEL desta pagina e mais fresco que o tibia.com: em 18/08/2026 ela dava
+    # 203 enquanto a ficha, o highscores e a API TibiaData ainda diziam 199 — e o
+    # 203 era o certo (confirmado pelo Caio, olhando o cliente). A XP publicada,
+    # ao contrario, so anda quando o highscores libera. Guardamos as duas coisas:
+    # exp = o que esta publicado; level = o de verdade; piso = a XP minima do level.
+    ml = re.search(r"Level\s*(\d{1,4})", pagina)
+    level_vivo = int(ml.group(1)) if ml else None
+
+    dados = carregar(LEI_F, {})
+    leituras = dados.setdefault("leituras", [])
+
+    anteriores = [l["exp"] for l in leituras if isinstance(l.get("exp"), int)]
+    if anteriores and exp < max(anteriores):
+        # XP so cai com morte; a fonte pode ter servido um retrato velho
+        if verboso:
+            print("  ignorando: %s e menor que o maximo ja lido (%s)"
+                  % (format(exp, ",d"), format(max(anteriores), ",d")))
+        return {"ok": False, "motivo": "retrocesso"}
+
+    agora = datetime.datetime.utcnow()
+    level = level_vivo or level_da_exp(exp)
+    reg = {"ts": agora.isoformat(timespec="seconds") + "Z",
+           "ancora": ancora_de(agora), "exp": exp, "level": level,
+           "rank": None, "fonte": "tibiastatistic", "idade": idade}
+    piso = exp_do_level(level)
+    if piso > exp:                       # o level ja passou o que o highscores mostra
+        reg["piso"] = piso
+    leituras.append(reg)
+    dados["leituras"] = leituras[-400:]
+    dados["sessoes"] = sessoes          # horarios de jogo, para atribuir o dia
+    gravar(LEI_F, dados)
+    escrever_js(dados, cfg)
+    publicar_no_git(verboso)
+
+    if verboso:
+        print("%s - %s, %s" % (nome, cfg.get("mundo", "?"), cfg.get("vocacao", "?")))
+        print("  XP publicada: {:,}".format(exp).replace(",", ".") + "  (level %d)" % level)
+        if piso > exp:
+            print("  level %d ja garante no minimo {:,}".format(piso).replace(",", ".") % level
+                  + "  (+{:,} ainda nao publicado)".format(piso - exp).replace(",", "."))
+        print("  fonte: tibia-statistic  %s" % (idade or ""))
+        print("  dias com sessoes registradas: %d" % len(sessoes))
+    return {"ok": True, "exp": exp, "level": level, "fonte": "tibiastatistic", "idade": idade}
+
+
 # ------------------------------------------------------------------ comandos
 def cmd_setup(nome):
     ch = buscar_personagem(nome)
@@ -548,6 +636,8 @@ def main():
             cmd_setup(" ".join(args[1:]))
         elif cmd == "once":
             ler(verboso=True, esperar=12)
+        elif cmd == "once-ts":
+            ler_tibiastatistic(verboso=True)
         elif cmd == "publicar":
             publicar_no_git()
         elif cmd == "status":
