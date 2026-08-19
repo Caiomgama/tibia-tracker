@@ -1112,6 +1112,15 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 19.08.2026 17:13"
+  },
+  {
+   "ts": "2026-08-19T19:05:04Z",
+   "ancora": "2026-08-19",
+   "exp": 148764016,
+   "level": 209,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 19.08.2026 18:13"
   }
  ],
  "2026-08-14": {
@@ -1132,6 +1141,11 @@
     "start": "17:30",
     "end": "17:40",
     "duration": "9m"
+   },
+   {
+    "start": "18:50",
+    "end": "Online",
+    "duration": "14m"
    }
   ],
   "18.08.2026": [
