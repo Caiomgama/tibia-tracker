@@ -2477,6 +2477,16 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 25.08.2026 22:13"
+  },
+  {
+   "ts": "2026-08-26T00:05:04Z",
+   "ancora": "2026-08-25",
+   "exp": 175121861,
+   "level": 223,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 25.08.2026 23:13",
+   "piso": 179916200
   }
  ],
  "2026-08-14": {
@@ -2487,11 +2497,12 @@
   "ts": "2026-08-14T16:19:50"
  },
  "sessoes": {
+  "26.08.2026": [],
   "25.08.2026": [
    {
     "start": "22:50",
     "end": "Online",
-    "duration": "14m"
+    "duration": "1h 14m"
    }
   ],
   "24.08.2026": [
@@ -2627,33 +2638,6 @@
     "start": "23:40",
     "end": "03:00",
     "duration": "3h 19m"
-   }
-  ],
-  "19.08.2026": [
-   {
-    "start": "11:50",
-    "end": "13:00",
-    "duration": "1h 10m"
-   },
-   {
-    "start": "17:30",
-    "end": "17:40",
-    "duration": "9m"
-   },
-   {
-    "start": "18:50",
-    "end": "19:10",
-    "duration": "20m"
-   },
-   {
-    "start": "22:50",
-    "end": "23:20",
-    "duration": "29m"
-   },
-   {
-    "start": "23:30",
-    "end": "01:10",
-    "duration": "1h 40m"
    }
   ]
  }
