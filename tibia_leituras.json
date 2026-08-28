@@ -3034,6 +3034,15 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 28.08.2026 09:12"
+  },
+  {
+   "ts": "2026-08-28T11:05:02Z",
+   "ancora": "2026-08-28",
+   "exp": 221892350,
+   "level": 239,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 28.08.2026 10:12"
   }
  ],
  "2026-08-14": {
@@ -3044,7 +3053,13 @@
   "ts": "2026-08-14T16:19:50"
  },
  "sessoes": {
-  "28.08.2026": [],
+  "28.08.2026": [
+   {
+    "start": "10:50",
+    "end": "Online",
+    "duration": "14m"
+   }
+  ],
   "27.08.2026": [
    {
     "start": "11:50",
