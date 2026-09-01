@@ -1,15 +1,6 @@
 {
  "leituras": [
   {
-   "ts": "2026-08-15T06:44:04Z",
-   "ancora": "2026-08-14",
-   "exp": 96517530,
-   "level": 181,
-   "rank": 918,
-   "fonte": "highscores",
-   "idade": "64 minutes ago"
-  },
-  {
    "ts": "2026-08-15T07:44:04Z",
    "ancora": "2026-08-14",
    "exp": 96517530,
@@ -3716,6 +3707,15 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 01.09.2026 10:13"
+  },
+  {
+   "ts": "2026-09-01T12:05:04Z",
+   "ancora": "2026-09-01",
+   "exp": 262631458,
+   "level": 252,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 01.09.2026 11:13"
   }
  ],
  "2026-08-14": {
