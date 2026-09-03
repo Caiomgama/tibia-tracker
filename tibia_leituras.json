@@ -1,15 +1,6 @@
 {
  "leituras": [
   {
-   "ts": "2026-08-16T17:00:09Z",
-   "ancora": "2026-08-16",
-   "exp": 120960528,
-   "level": 195,
-   "rank": 837,
-   "fonte": "highscores",
-   "idade": "20 minutes ago"
-  },
-  {
    "ts": "2026-08-16T18:00:07Z",
    "ancora": "2026-08-16",
    "exp": 120960528,
@@ -3723,6 +3714,15 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 02.09.2026 22:13"
+  },
+  {
+   "ts": "2026-09-03T00:05:03Z",
+   "ancora": "2026-09-02",
+   "exp": 268795197,
+   "level": 254,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 02.09.2026 23:13"
   }
  ],
  "2026-08-14": {
@@ -3733,6 +3733,7 @@
   "ts": "2026-08-14T16:19:50"
  },
  "sessoes": {
+  "03.09.2026": [],
   "02.09.2026": [
    {
     "start": "12:10",
@@ -3847,33 +3848,6 @@
     "start": "23:20",
     "end": "03:20",
     "duration": "3h 59m"
-   }
-  ],
-  "27.08.2026": [
-   {
-    "start": "11:50",
-    "end": "13:20",
-    "duration": "1h 30m"
-   },
-   {
-    "start": "15:20",
-    "end": "15:30",
-    "duration": "10m"
-   },
-   {
-    "start": "20:11",
-    "end": "20:50",
-    "duration": "39m"
-   },
-   {
-    "start": "21:00",
-    "end": "21:50",
-    "duration": "49m"
-   },
-   {
-    "start": "23:20",
-    "end": "02:10",
-    "duration": "2h 49m"
    }
   ]
  }
