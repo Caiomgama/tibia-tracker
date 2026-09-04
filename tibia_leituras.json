@@ -1,16 +1,6 @@
 {
  "leituras": [
   {
-   "ts": "2026-08-18T16:05:02Z",
-   "ancora": "2026-08-18",
-   "exp": 135922446,
-   "level": 204,
-   "rank": null,
-   "fonte": "tibiastatistic",
-   "idade": "atualizado 18.08.2026 15:13",
-   "piso": 137390400
-  },
-  {
    "ts": "2026-08-18T17:05:03Z",
    "ancora": "2026-08-18",
    "exp": 135922446,
@@ -3714,6 +3704,15 @@
    "rank": null,
    "fonte": "tibiastatistic",
    "idade": "atualizado 04.09.2026 07:12"
+  },
+  {
+   "ts": "2026-09-04T09:05:02Z",
+   "ancora": "2026-09-04",
+   "exp": 268797133,
+   "level": 254,
+   "rank": null,
+   "fonte": "tibiastatistic",
+   "idade": "atualizado 04.09.2026 08:17"
   }
  ],
  "2026-08-14": {
@@ -3729,6 +3728,11 @@
     "start": "02:11",
     "end": "03:04",
     "duration": "52m"
+   },
+   {
+    "start": "08:14",
+    "end": "Online",
+    "duration": "50m"
    }
   ],
   "03.09.2026": [
